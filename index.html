@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antenna Array Calculator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <header>
+        <h1>Antenna Array Radiation Pattern Calculator</h1>
+        <p>Tính mẫu bức xạ mảng anten tuyến tính đều (ULA) với khoảng cách thực tế (mét).</p>
+    </header>
+
+    <section id="inputs">
+        <form id="arrayForm">
+            <label>Số phần tử (N): <input type="number" id="N" value="8" min="1"></label><br>
+            <label>Khoảng cách d (mét): <input type="number" id="d_meter" value="0.0625" step="0.001" min="0.001"></label><br>
+            <label>Tần số (GHz): <input type="number" id="f" value="2.4" step="0.1" min="0.1"></label><br>
+            <button type="submit">Tính & Vẽ</button>
+        </form>
+        <div id="info" style="margin-top:10px; font-size:14px; color:#555;"></div>
+    </section>
+
+    <section id="graph">
+        <canvas id="patternChart" width="800" height="500"></canvas>
+    </section>
+
+    <section id="controls">
+        <button id="clearBtn">Clear All</button>
+    </section>
+
+    <section id="table">
+        <h3>Giá trị đặc biệt (mỗi 10°)</h3>
+        <div id="resultsTable"></div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
