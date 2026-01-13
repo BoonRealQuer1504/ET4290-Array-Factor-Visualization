@@ -1,4 +1,3 @@
-// script.js - ĐÃ SỬA CÔNG THỨC AF ĐÚNG 100%
 let chart;
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -13,16 +12,9 @@ document.addEventListener("DOMContentLoaded", function () {
             maintainAspectRatio: false,
             animation: { duration: 0 },
             scales: {
-                x: { type: 'linear', min: -90, max: 90,
-                    title: { display: true, text: 'θ (degrees)' },
-                    ticks: { stepSize: 10, callback: v => v + '°' }
-                },
-                y: { min: -50, max: 0,
-                    title: { display: true, text: 'Normalized Gain (dB)' },
-                    ticks: { stepSize: 10, callback: v => v + ' dB' }
-                }
-            },
-            plugins: { legend: { position: 'top' } }
+                x: { type: 'linear', min: -90, max: 90, title: { display: true, text: 'Góc θ (độ)' }, ticks: { stepSize: 10 } },
+                y: { min: -50, max: 0, title: { display: true, text: 'Normalized Gain (dB)' } }
+            }
         }
     });
 
@@ -33,56 +25,74 @@ document.addEventListener("DOMContentLoaded", function () {
         const N = parseInt(document.getElementById('N').value);
         const d_meter = parseFloat(document.getElementById('d_meter').value);
         const f_GHz = parseFloat(document.getElementById('f').value);
+        const beta_deg = parseFloat(document.getElementById('beta_deg').value);
 
-        if (isNaN(N) || isNaN(d_meter) || isNaN(f_GHz) || N < 1 || d_meter <= 0 || f_GHz <= 0) {
-            alert("Nhập lại!");
-            return;
-        }
-
+        // Tính toán các thông số lambda và d/lambda
         const c = 3e8;
         const lambda = c / (f_GHz * 1e9);
         const d_lambda = d_meter / lambda;
+        const beta_rad = (beta_deg * Math.PI) / 180;
 
-        document.getElementById('info').innerHTML = `λ = ${lambda.toFixed(4)} m | d/λ = <strong>${d_lambda.toFixed(3)}</strong>`;
+        // Cập nhật hiển thị thông tin
+        document.getElementById('info').innerHTML = `λ = <strong>${lambda.toFixed(4)}</strong> m | d/λ = <strong>${d_lambda.toFixed(3)}</strong> | β = <strong>${beta_deg}°</strong>`;
 
         const theta = [];
-        const pattern_dB = [];
-        let max_af = 0;
         const af_values = [];
+        let max_af = 0;
 
         for (let th = -90; th <= 90; th += 1) {
-            theta.push(th);
-            const psi = 2 * Math.PI * d_lambda * Math.cos(th * Math.PI / 180);
+            const th_rad = (th * Math.PI) / 180;
+            // Công thức psi tổng quát có beta: ψ = kd*sin(θ) + β
+            const psi = (2 * Math.PI * d_lambda * Math.sin(th_rad)) + beta_rad;
+
             const af = Math.abs(psi) < 1e-10 
                 ? 1 
-                : Math.abs( Math.sin( (N * psi) / 2 ) / ( N * Math.sin( psi / 2 ) ) );
+                : Math.abs( Math.sin((N * psi) / 2) / (N * Math.sin(psi / 2)) );
+            
             af_values.push(af);
             if (af > max_af) max_af = af;
+            theta.push(th);
         }
 
-        for (let i = 0; i < af_values.length; i++) {
-            pattern_dB.push(20 * Math.log10(af_values[i] / max_af + 1e-12));
-        }
+        const pattern_dB = af_values.map(v => 20 * Math.log10(v / max_af + 1e-12));
 
         const color = `hsl(${Math.random() * 360}, 70%, 50%)`;
-        const dataPoints = theta.map((th, i) => ({ x: th, y: pattern_dB[i] }));
-
         chart.data.datasets.push({
-            label: `N=${N}, d=${d_meter}m, f=${f_GHz}GHz (d/λ=${d_lambda.toFixed(3)})`,
-            data: dataPoints,
+            label: `N=${N}, β=${beta_deg}°, d/λ=${d_lambda.toFixed(3)}`,
+            data: theta.map((th, i) => ({ x: th, y: pattern_dB[i] })),
             borderColor: color,
-            fill: false,
-            tension: 0.1,
-            pointRadius: 0
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false
         });
         chart.update();
 
-        updateTable(
-            theta.filter((_, i) => i % 5 === 0),
-            pattern_dB.filter((_, i) => i % 5 === 0),
-            d_lambda
+        calculatePerformance(theta, pattern_dB, N, d_lambda);
+
+        updateTableHorizontal(
+            theta.filter((_, i) => i % 10 === 0),
+            pattern_dB.filter((_, i) => i % 10 === 0)
         );
     });
+
+    // Hàm vẽ bảng nằm ngang
+    function updateTableHorizontal(theta, dB) {
+        let html = '<div style="overflow-x: auto; margin-top: 15px;">';
+        html += '<table border="1" style="margin: 0 auto; border-collapse: collapse; white-space: nowrap; width: 100%;">';
+        
+        // Dòng góc Theta
+        html += '<tr style="background: #f8f9fa;"><th>θ (°)</th>';
+        theta.forEach(th => { html += `<td style="padding: 8px; border: 1px solid #ddd;">${th}</td>`; });
+        html += '</tr>';
+
+        // Dòng giá trị dB
+        html += '<tr><th>dB</th>';
+        dB.forEach(val => { html += `<td style="padding: 8px; border: 1px solid #ddd;">${val.toFixed(1)}</td>`; });
+        html += '</tr>';
+
+        html += '</table></div>';
+        document.getElementById('resultsTable').innerHTML = html;
+    }
 
     document.getElementById('clearBtn').addEventListener('click', () => {
         chart.data.datasets = [];
@@ -91,12 +101,49 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('info').innerHTML = '';
     });
 
-    function updateTable(theta, dB, d_lambda) {
-        let html = '<table border="1" style="margin:10px auto;"><tr><th>θ (°)</th><th>dB</th></tr>';
-        theta.forEach((th, i) => {
-            html += `<tr><td>${th}</td><td>${dB[i].toFixed(2)}</td></tr>`;
-        });
-        html += `<tr><td colspan="2">d/λ = ${d_lambda.toFixed(3)}</td></tr></table>`;
-        document.getElementById('resultsTable').innerHTML = html;
+
+    function calculatePerformance(theta, dB, N, d_lambda) {
+        // 1. Tìm HPBW (Half-Power Beamwidth - 3dB)
+        let startIndex = -1, endIndex = -1;
+        for (let i = 0; i < dB.length; i++) {
+            if (dB[i] >= -3) {
+                if (startIndex === -1) startIndex = i;
+                endIndex = i;
+            }
+        }
+        const hpbw = theta[endIndex] - theta[startIndex];
+
+        // 2. Tìm SLL (Side Lobe Level)
+        // Tìm đỉnh lớn nhất nằm ngoài vùng búp chính (giả định búp chính rộng khoảng 2*HPBW)
+        let maxSideLobe = -99;
+        const mainLobeHalfWidth = Math.max(hpbw, 10); 
+        const centerIdx = dB.indexOf(Math.max(...dB));
+        
+        for (let i = 0; i < dB.length; i++) {
+            // Loại bỏ vùng búp chính để tìm búp phụ
+            if (Math.abs(theta[i] - theta[centerIdx]) > mainLobeHalfWidth) {
+                if (dB[i] > maxSideLobe) maxSideLobe = dB[i];
+            }
+        }
+
+        // 3. Tìm FNBW (First Null Beamwidth)
+        // Quét từ đỉnh sang hai bên để tìm điểm cực tiểu đầu tiên
+        let leftNull = centerIdx, rightNull = centerIdx;
+        while (leftNull > 0 && dB[leftNull] > dB[leftNull-1]) leftNull--;
+        while (rightNull < dB.length - 1 && dB[rightNull] > dB[rightNull+1]) rightNull++;
+        const fnbw = theta[rightNull] - theta[leftNull];
+
+        // 4. Ước tính Directivity (D0) theo công thức Krauss hoặc chuẩn mảng
+        // Với mảng tuyến tính: D0 ≈ 2 * N * (d/lambda)
+        const directivity = 10 * Math.log10(2 * N * d_lambda);
+
+        // Hiển thị ra giao diện
+        document.getElementById('hpbw-val').innerText = hpbw > 0 ? hpbw.toFixed(1) : "N/A";
+        document.getElementById('sll-val').innerText = maxSideLobe > -99 ? maxSideLobe.toFixed(1) : "N/A";
+        document.getElementById('fnbw-val').innerText = fnbw > 0 ? fnbw.toFixed(1) : "N/A";
+        document.getElementById('dir-val').innerText = directivity > 0 ? directivity.toFixed(1) : "N/A";
     }
+
+
+    
 });

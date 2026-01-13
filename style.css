@@ -113,3 +113,37 @@ th {
     background: #f8f9fa;
     font-weight: 600;
 }
+
+#resultsTable {
+    width: 100%;
+    overflow-x: auto; /* Cho phép cuộn ngang trên điện thoại hoặc màn hình nhỏ */
+    margin-top: 20px;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 0 auto;
+    min-width: 100%; /* Đảm bảo bảng trải dài nếu có nhiều dữ liệu */
+}
+
+th, td {
+    padding: 10px 5px;
+    text-align: center;
+    border: 1px solid #ddd;
+    font-size: 13px;
+}
+
+/* Thêm style cho nhiều bảng */
+.table-wrapper {
+    margin: 25px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.table-wrapper h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 1.1em;
+}

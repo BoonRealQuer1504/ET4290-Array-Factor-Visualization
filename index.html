@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antenna Array Calculator</title>
+    <title>Antenna Array Calculator - Full Version</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -11,17 +11,18 @@
 
     <header>
         <h1>Antenna Array Radiation Pattern Calculator</h1>
-        <p>Tính mẫu bức xạ mảng anten tuyến tính đều (ULA) với khoảng cách thực tế (mét).</p>
+        <p>Mô phỏng mảng anten tuyến tính với pha kích thích β và các thông số bước sóng.</p>
     </header>
 
     <section id="inputs">
         <form id="arrayForm">
-            <label>Số phần tử (N): <input type="number" id="N" value="8" min="1"></label><br>
-            <label>Khoảng cách d (mét): <input type="number" id="d_meter" value="0.0625" step="0.001" min="0.001"></label><br>
-            <label>Tần số (GHz): <input type="number" id="f" value="2.4" step="0.1" min="0.1"></label><br>
+            <label>Số phần tử (N): <input type="number" id="N" value="8" min="1"></label>
+            <label>Khoảng cách d (mét): <input type="number" id="d_meter" value="0.0625" step="0.001"></label>
+            <label>Tần số (GHz): <input type="number" id="f" value="2.4" step="0.1"></label>
+            <label>Pha kích thích β (độ): <input type="number" id="beta_deg" value="0" step="1"></label>
             <button type="submit">Tính & Vẽ</button>
         </form>
-        <div id="info" style="margin-top:10px; font-size:14px; color:#555;"></div>
+        <div id="info" style="margin-top:10px; padding:10px; background:#e3f2fd; border-radius:4px; font-size:14px; color:#1976d2;"></div>
     </section>
 
     <section id="graph">
@@ -33,8 +34,23 @@
     </section>
 
     <section id="table">
-        <h3>Giá trị đặc biệt (mỗi 10°)</h3>
+        <h3>Bảng giá trị đặc biệt (mỗi 10°)</h3>
         <div id="resultsTable"></div>
+    </section>
+
+    <section id="metrics" style="display: flex; justify-content: space-around; background: #e8f5e9; border: 1px solid #2e7d32; padding: 15px; border-radius: 8px; margin-top: 10px;">
+        <div><strong>HPBW:</strong> <span id="hpbw-val">-</span>°</div>
+        <div><strong>SLL:</strong> <span id="sll-val">-</span> dB</div>
+        <div><strong>FNBW:</strong> <span id="fnbw-val">-</span>°</div>
+        <div><strong>Directivity:</strong> <span id="dir-val">-</span> dBi</div>
+    </section>
+
+    <section id="references" style="text-align: left; padding: 20px; font-size: 14px; line-height: 1.6; border-top: 2px solid #eee;">
+        <h3 style="color: #333;">References:</h3>
+        <ol>
+            <li>"Phased Array Antenna Patterns - Part 1: Linear Array Beam Characteristics and Array Factor", P. Delos, B. Broughton, J. Kraft, Analog Devices, May 2020</li>
+            <li>"Antenna Theory - Analysis and Design", C. A. Balanis, Second Edition, John Wiley & Sons, Inc., 1997, ISBN: 0-471-59268-4</li>
+        </ol>
     </section>
 
     <script src="script.js"></script>
