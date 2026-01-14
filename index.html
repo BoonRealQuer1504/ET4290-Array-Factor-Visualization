@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antenna Array Calculator - Full Version</title>
+    <title>Antenna Array Calculator - Large View</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -11,7 +11,7 @@
 
     <header>
         <h1>Antenna Array Radiation Pattern Calculator</h1>
-        <p>Mô phỏng mảng anten tuyến tính với pha kích thích β và các thông số bước sóng.</p>
+        <p>Mô phỏng mảng anten tuyến tính - Chế độ xem lớn.</p>
     </header>
 
     <section id="inputs">
@@ -22,35 +22,41 @@
             <label>Pha kích thích β (độ): <input type="number" id="beta_deg" value="0" step="1"></label>
             <button type="submit">Tính & Vẽ</button>
         </form>
-        <div id="info" style="margin-top:10px; padding:10px; background:#e3f2fd; border-radius:4px; font-size:14px; color:#1976d2;"></div>
+        <div id="info"></div>
     </section>
 
-    <section id="graph">
-        <canvas id="patternChart" width="800" height="500"></canvas>
-    </section>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 30px; max-width: 1000px; margin: 0 auto;">
+        
+        <section style="width: 100%; height: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <h3 style="margin-top: 0;">Biểu đồ Cartesian (dB)</h3>
+            <div style="width: 100%; height: 420px;">
+                <canvas id="patternChart"></canvas>
+            </div>
+        </section>
+
+        <section style="width: 100%; height: 650px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <h3 style="margin-top: 0;">Biểu đồ Polar (Radiation Pattern)</h3>
+            <div style="width: 100%; height: 570px;">
+                <canvas id="polarChart"></canvas>
+            </div>
+        </section>
+        
+    </div>
 
     <section id="controls">
         <button id="clearBtn">Clear All</button>
     </section>
 
-    <section id="table">
-        <h3>Bảng giá trị đặc biệt (mỗi 10°)</h3>
-        <div id="resultsTable"></div>
-    </section>
-
-    <section id="metrics" style="display: flex; justify-content: space-around; background: #e8f5e9; border: 1px solid #2e7d32; padding: 15px; border-radius: 8px; margin-top: 10px;">
+    <section id="metrics" style="display: flex; justify-content: space-around; background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
         <div><strong>HPBW:</strong> <span id="hpbw-val">-</span>°</div>
         <div><strong>SLL:</strong> <span id="sll-val">-</span> dB</div>
         <div><strong>FNBW:</strong> <span id="fnbw-val">-</span>°</div>
         <div><strong>Directivity:</strong> <span id="dir-val">-</span> dBi</div>
     </section>
 
-    <section id="references" style="text-align: left; padding: 20px; font-size: 14px; line-height: 1.6; border-top: 2px solid #eee;">
-        <h3 style="color: #333;">References:</h3>
-        <ol>
-            <li>"Phased Array Antenna Patterns - Part 1: Linear Array Beam Characteristics and Array Factor", P. Delos, B. Broughton, J. Kraft, Analog Devices, May 2020</li>
-            <li>"Antenna Theory - Analysis and Design", C. A. Balanis, Second Edition, John Wiley & Sons, Inc., 1997, ISBN: 0-471-59268-4</li>
-        </ol>
+    <section id="table">
+        <h3>Bảng giá trị đặc biệt (mỗi 10°)</h3>
+        <div id="resultsTable"></div>
     </section>
 
     <script src="script.js"></script>
