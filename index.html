@@ -5,14 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Antenna Array Calculator - Large View</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
 </head>
 <body>
 
-    <header>
-        <h1>Antenna Array Radiation Pattern Calculator</h1>
-        <p>Mô phỏng mảng anten tuyến tính - Chế độ xem lớn.</p>
+    <header style="text-align: left; padding: 30px 40px;">
+        <h1 style="margin-bottom: 10px;">Antenna Array Factor Calculator</h1>
+        <p style="font-size: 1.1em; line-height: 1.6; max-width: 900px; margin: 0;">
+            <strong>Antenna Array Factor Calculator</strong> là một công cụ phần mềm chuyên dụng để mô phỏng và phân tích đồ thị bức xạ của các mảng anten tuyến tính. 
+            Công cụ trực tuyến miễn phí này cho phép dự đoán <strong>Hệ số mảng (Array Factor - AF)</strong>, 
+            <strong>Độ định hướng (Directivity)</strong> và <strong>Độ rộng búp sóng</strong> với nhiều cấu hình khác nhau.
+        </p>
+        <div style="margin-top: 15px; font-size: 0.9em; opacity: 0.9;">
+            <span>✨ Mảng tuyến tính đồng nhất (ULA)</span> | 
+            <span>✨ Chế độ Broadside & End-fire</span> | 
+            <span>✨ Mô phỏng 2D/3D thời gian thực</span>
+        </div>
     </header>
 
     <section id="inputs">
@@ -35,21 +54,21 @@
     <div style="display: flex; flex-direction: column; align-items: center; gap: 30px; max-width: 1000px; margin: 0 auto;">
         
         <section style="width: 100%; height: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-            <h3 style="margin-top: 0;">Biểu đồ Cartesian (dB)</h3>
+            <h3 style="margin-top: 0;">Array Factor Pattern (dB)</h3>
             <div style="width: 100%; height: 420px;">
                 <canvas id="patternChart"></canvas>
             </div>
         </section>
 
         <section style="width: 100%; height: 650px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-            <h3 style="margin-top: 0;">Biểu đồ Polar (Radiation Pattern)</h3>
+            <h3 style="margin-top: 0;"> Polar Plot of Radiation Pattern (dB)</h3>
             <div style="width: 100%; height: 570px;">
                 <canvas id="polarChart"></canvas>
             </div>
         </section>
 
         <section style="width: 100%; height: 650px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-            <h3 style="margin-top: 0;">Mô phỏng 3D Radiation Pattern (Tuyến tính)</h3>
+            <h3 style="margin-top: 0;"> 3D Radiation Pattern</h3>
             <div id="threeDChart" style="width: 100%; height: 570px;"></div>
         </section>
         
@@ -69,6 +88,211 @@
     <section id="table">
         <h3>Bảng giá trị đặc biệt (mỗi 10°)</h3>
         <div id="resultsTable"></div>
+    </section>
+
+
+    <section id="theory-section" style="text-align: left; line-height: 1.6; padding: 30px;">
+        <h2 style="text-align: center; color: #764ba2;">Cơ sở lý thuyết & Công thức</h2>
+        <hr>
+        
+        <h3>1. Giới thiệu</h3>
+        <p>Hệ thống mảng anten (Antenna Array) là sự kết hợp của nhiều phần tử anten giống nhau nhằm đạt được đặc tính bức xạ mong muốn, như tăng độ định hướng và khả năng quét búp sóng điện tử mà không cần di chuyển vật lý anten.</p>
+
+        <h3>2. Hệ số mảng (Array Factor - AF)</h3>
+
+<p>
+Đối với một mảng tuyến tính đồng nhất (Uniform Linear Array - ULA) gồm $N$ phần tử giống nhau,
+đặt dọc theo trục $z$ với khoảng cách giữa các phần tử là $d$, hệ số mảng (Array Factor)
+được xác định như sau:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+AF =
+\left|
+\frac{\sin\left(\frac{N}{2}\psi\right)}
+{N\sin\left(\frac{1}{2}\psi\right)}
+\right|
+$$
+</div>
+
+<p>Trong đó:</p>
+<ul>
+    <li>$\psi = k d \cos(\theta) + \beta$ là độ lệch pha tổng cộng giữa hai phần tử kế tiếp.</li>
+    <li>$k = \dfrac{2\pi}{\lambda}$ là số sóng.</li>
+    <li>$d$ là khoảng cách giữa các phần tử.</li>
+    <li>$\theta$ là góc khảo sát tính từ trục của mảng.</li>
+    <li>$\beta$ là pha kích thích tiến giữa các phần tử.</li>
+</ul>
+
+<h4>2.1. Chứng minh công thức hệ số mảng</h4>
+
+<p>
+Tổng trường (hoặc biên độ sóng) tại một hướng quan sát $\theta$ được tính bằng tổng đóng góp
+của tất cả các phần tử trong mảng:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+AF = \left| \sum_{n=0}^{N-1} e^{j n \psi} \right|
+$$
+</div>
+
+<p>
+Biểu thức trên là một chuỗi hình học hữu hạn và có thể rút gọn về dạng khép kín:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+\sum_{n=0}^{N-1} e^{j n \psi}
+=
+\frac{1 - e^{jN\psi}}{1 - e^{j\psi}}
+$$
+</div>
+
+<p>
+Lấy trị tuyệt đối và biến đổi đại số, ta thu được công thức hệ số mảng đã nêu ở trên.
+</p>
+
+<h4>2.2. Điều kiện đạt cực đại của hệ số mảng</h4>
+
+<p>
+Hệ số mảng đạt giá trị cực đại khi các sóng phát ra từ mọi phần tử trong mảng
+cộng pha hoàn toàn tại hướng quan sát. Điều kiện này xảy ra khi:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+\psi = 2m\pi \quad (m \in \mathbb{Z})
+$$
+</div>
+
+<p>
+Cực đại chính (main lobe) tương ứng với trường hợp $\psi = 0$, tức là:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+k d \cos(\theta) + \beta = 0
+$$
+</div>
+
+<p>
+Khi đó, hệ số mảng đạt giá trị lớn nhất. Do hệ số mảng đã được chuẩn hóa theo giá trị cực đại,
+giá trị đỉnh của AF bằng 1, tương đương với 0 dB trong thang logarith.
+</p>
+
+<h4>2.3. Ý nghĩa vật lý</h4>
+
+<p>
+Điều kiện cực đại của hệ số mảng phản ánh hiện tượng giao thoa tăng cường, khi
+độ lệch pha hình học giữa các phần tử được bù chính xác bởi pha kích thích.
+Ngược lại, khi điều kiện cộng pha không được thỏa mãn, hiện tượng giao thoa
+triệt tiêu xảy ra, tạo nên các điểm null và các side lobe trong giản đồ bức xạ.
+</p>
+
+        
+        
+
+        <h3>3. Các chế độ bức xạ đặc biệt</h3>
+
+<p>
+Tùy theo giá trị của pha kích thích tiến $\beta$, mảng anten tuyến tính đồng nhất (ULA)
+có thể tạo ra các chế độ bức xạ khác nhau. Các chế độ này được xác định từ điều kiện
+cực đại của hệ số mảng:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+\psi = k d \cos(\theta) + \beta = 0
+$$
+</div>
+
+<p>
+Hai chế độ bức xạ đặc biệt và quan trọng nhất là chế độ broadside và end-fire.
+</p>
+
+<h4>3.1. Chế độ Broadside ($\beta = 0$)</h4>
+
+<p>
+Trong chế độ broadside, các phần tử của mảng được kích thích cùng pha, tức là
+$\beta = 0$. Điều kiện cực đại của hệ số mảng trở thành:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+k d \cos(\theta) = 0
+$$
+</div>
+
+<p>
+Từ đó suy ra:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+\cos(\theta) = 0 \Rightarrow \theta = 90^\circ
+$$
+</div>
+
+<p>
+Như vậy, búp sóng chính của mảng anten nằm vuông góc với trục mảng. Chế độ broadside
+thường được sử dụng khi yêu cầu bức xạ đối xứng và đạt độ lợi lớn theo phương vuông góc
+với mảng.
+</p>
+
+<h4>3.2. Chế độ End-fire ($\beta = -kd$)</h4>
+
+<p>
+Trong chế độ end-fire, pha kích thích tiến được lựa chọn sao cho:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+\beta = -k d
+$$
+</div>
+
+<p>
+Khi đó, điều kiện cực đại của hệ số mảng trở thành:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+k d \cos(\theta) - k d = 0
+$$
+</div>
+
+<p>
+Suy ra:
+</p>
+
+<div style="text-align: center; background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+$$
+\cos(\theta) = 1 \Rightarrow \theta = 0^\circ
+$$
+</div>
+
+<p>
+Do tính đối xứng của mảng, một búp sóng phụ có thể xuất hiện tại $\theta = 180^\circ$.
+Trong chế độ end-fire, búp sóng chính của mảng anten nằm dọc theo trục mảng, và thường
+được sử dụng trong các ứng dụng cần bức xạ theo phương dọc trục.
+</p>
+
+<h4>3.3. Nhận xét</h4>
+
+<ul>
+    <li>Chế độ broadside cho bức xạ vuông góc với trục mảng và có dạng giản đồ đối xứng.</li>
+    <li>Chế độ end-fire cho bức xạ dọc theo trục mảng và yêu cầu điều chỉnh pha kích thích.</li>
+    <li>Bằng cách thay đổi pha $\beta$, có thể điều khiển hướng búp sóng chính của mảng anten (beam steering).</li>
+</ul>
+
+
+        <h3>4. Tài liệu tham khảo</h3>
+        <ul style="list-style-type: decimal;">
+            <li>Constantine A. Balanis, <em>Antenna Theory: Analysis and Design</em>, 4th Edition, Wiley.</li>
+            <li>Robert J. Mailloux, <em>Phased Array Antenna Handbook</em>, Artech House.</li>
+        </ul>
     </section>
 
     <script src="script.js"></script>

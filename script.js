@@ -13,8 +13,8 @@ document.addEventListener("DOMContentLoaded", function () {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { type: 'linear', min: -180, max: 180, title: { display: true, text: 'Góc θ (độ)' }, ticks: { stepSize: 30 } },
-                y: { min:-40, max: 0, title: { display: true, text: 'Gain (dB)' } }
+                x: { type: 'linear', min: -180, max: 180, title: { display: true, text: 'Off-axis angle θ (độ)' }, ticks: { stepSize: 30 } },
+                y: { min:-40, max: 0, title: { display: true, text: 'Normalized Array Factor (dB)' } }
             },
             plugins: { legend: { position: 'top' } }
         }
@@ -117,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 : Math.abs( Math.sin((N * psi) / 2) / (N * Math.sin(psi / 2)) );
             
             let db = 20 * Math.log10(af + 1e-12);
-            if (db < -60) db = -60;
+            if (db < -40) db = -40;
 
             polarData.push(db);
             polarLabels.push(th % 30 === 0 ? th + "°" : "");

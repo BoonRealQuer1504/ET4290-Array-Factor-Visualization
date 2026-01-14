@@ -147,3 +147,21 @@ th, td {
     color: #333;
     font-size: 1.1em;
 }
+
+
+#theory-section {
+    background: #ffffff;
+    margin-top: 40px;
+    border-top: 5px solid #764ba2;
+}
+
+#theory-section h3 {
+    color: #4b6cb7;
+    border-left: 4px solid #764ba2;
+    padding-left: 10px;
+    margin-top: 25px;
+}
+
+#theory-section ul li {
+    margin-bottom: 8px;
+}
