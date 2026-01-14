@@ -141,10 +141,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         chart.update();
 
-        // Cập nhật Polar Chart tương tự
-        polarChart.data.labels = polarLabels; // Label trục giữ nguyên
+        polarChart.data.labels = polarLabels; 
         polarChart.data.datasets.push({
-            label: `Run ${colorIndex}`, // Polar chart cần label để tooltip hiển thị đúng nếu muốn
+            label: `Run ${colorIndex}`, 
             data: polarData,
             borderColor: color,
             borderWidth: 2,
@@ -160,10 +159,10 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('clearBtn').addEventListener('click', () => {
         chart.data.datasets = []; chart.update();
         polarChart.data.datasets = []; polarChart.update();
-        colorIndex = 0; // Reset màu về đầu
-        isEndfireMode = false; // Reset mode nếu muốn (tùy chọn)
+        colorIndex = 0; 
+        isEndfireMode = false; 
         Plotly.purge('threeDChart');
-        setBetaState(false, null); // Reset ô input về mặc định
+        setBetaState(false, null); 
         document.getElementById('resultsTable').innerHTML = '';
         ['hpbw-val', 'sll-val', 'fnbw-val', 'dir-val'].forEach(id => document.getElementById(id).innerText = '-');
     });
@@ -250,7 +249,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function update3DPattern(N, d_lambda, beta_rad) {
         let dataX = [], dataY = [], dataZ = [], colors = [];
-        const step = 5; // Bước nhảy (độ) để vẽ lưới 3D, có thể chỉnh 2 hoặc 5 để mượt hơn
+        const step = 5; 
 
         for (let theta = 0; theta <= 180; theta += step) {
             let th_rad = (theta * Math.PI) / 180;
@@ -262,9 +261,6 @@ document.addEventListener("DOMContentLoaded", function () {
             
             for (let phi = 0; phi <= 360; phi += step) {
                 let ph_rad = (phi * Math.PI) / 180;
-                
-                // Chuyển đổi sang hệ tọa độ Đề-các (Cartesian 3D)
-                // Giả sử mảng anten đặt dọc theo trục Z
                 let r = af; 
                 let x = r * Math.sin(th_rad) * Math.cos(ph_rad);
                 let y = r * Math.sin(th_rad) * Math.sin(ph_rad);

@@ -20,11 +20,36 @@
         .btn-danger { background-color: #dc3545; color: white; }
         .info-panel { background: #e9ecef; padding: 10px; border-radius: 5px; margin-top: 15px; font-family: monospace; font-size: 14px; }
         .chart-container { width: 100%; height: 600px; }
+        header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; padding: 40px; border-radius: 10px; margin-bottom: 30px; 
+        }
+        .nav-link { display: inline-block; background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 15px; }
     </style>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 
 <div class="container">
+    <header style="background: linear-gradient(135deg, #6610f2 0%, #6f42c1 100%); color: white; padding: 40px; border-radius: 10px; margin-bottom: 30px;">
+        <h1 style="margin: 0;">Planar Antenna Array Calculator</h1>
+        <p style="font-size: 1.1em; opacity: 0.9; max-width: 900px; margin: 15px 0;">
+            Công cụ mô phỏng <strong>Mảng Phẳng 2 Chiều (2D Planar Array)</strong>. 
+            Phân tích hệ số mảng trong không gian $u-v$, lái búp sóng theo góc $\theta$ và $\phi$, cùng các mặt cắt bức xạ 2D trực quan.
+        </p>
+        <div style="font-size: 0.9em; margin-bottom: 15px;">
+            ✨ Phân tích không gian $u-v$ (Balanis) | ✨ Quét búp sóng 2D (Beam Steering) | ✨ Mặt cắt Polar $\phi$ (dB Scale)
+        </div>
+        <a href="index.html" class="nav-link" style="display: inline-block; background: #ffc107; color: #333; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 5px;">← Quay lại Mảng Tuyến tính (1D)</a>
+    </header>
     <div class="card">
         <h2>Thông số Mảng Anten Phẳng</h2>
         <form id="planarForm">
@@ -52,12 +77,12 @@
     </div>
 
     <div class="card">
-        <h3>1. Hệ tọa độ u-v (Theo Figure 6.31 Balanis)</h3>
+        <h3>1. Hệ tọa độ u-v </h3>
         <div id="uvChart" class="chart-container"></div>
     </div>
 
     <div class="card">
-        <h3>2. Hệ tọa độ thực Oxyz</h3>
+        <h3>2. Hệ tọa độ Oxyz</h3>
         <div id="realSpaceChart" class="chart-container"></div>
     </div>
 
@@ -76,6 +101,72 @@
         </div>
     </div>
 </div>
+
+<div class="card" id="theory-section" style="line-height: 1.7;">
+        <h2 style="text-align: center; color: #6610f2;">Cơ sở lý thuyết & Công thức (Mảng Phẳng)</h2>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <h3>1. Giới thiệu về Mảng Phẳng (Planar Array)</h3>
+        <p>
+            Mảng phẳng là sự mở rộng của mảng tuyến tính bằng cách sắp xếp các phần tử anten trên một mặt phẳng (thường là mặt phẳng $x-y$). 
+            Ưu điểm vượt trội của mảng phẳng so với mảng tuyến tính là khả năng <strong>lái búp sóng trong không gian 3D</strong> (cả góc $\theta$ và $\phi$), 
+            đồng thời kiểm soát được hình dạng búp sóng một cách linh hoạt hơn.
+        </p>
+
+        <h3>2. Hệ số mảng phẳng (Array Factor - AF)</h3>
+        <p>
+            Xét một mảng phẳng gồm $M$ phần tử dọc theo trục $x$ (khoảng cách $d_x$) và $N$ phần tử dọc theo trục $y$ (khoảng cách $d_y$). 
+            Hệ số mảng tổng quát được tính bằng tích của hai hệ số mảng tuyến tính:
+        </p>
+
+        <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #eee;">
+            $$ AF_{total}(\theta, \phi) = AF_x \times AF_y $$
+            <p>Dạng chuẩn hóa:</p>
+            $$ AF(\theta, \phi) = \left| \frac{\sin(\frac{M}{2}\psi_x)}{M\sin(\frac{1}{2}\psi_x)} \right| \times \left| \frac{\sin(\frac{N}{2}\psi_y)}{N\sin(\frac{1}{2}\psi_y)} \right| $$
+        </div>
+
+        <p>Trong đó, độ lệch pha tổng cộng trên mỗi trục là:</p>
+        <ul>
+            <li>$\psi_x = k d_x \sin\theta \cos\phi + \beta_x$</li>
+            <li>$\psi_y = k d_y \sin\theta \sin\phi + \beta_y$</li>
+        </ul>
+
+        <h3>3. Hệ tọa độ Cosine hướng ($u-v$ Space)</h3>
+        <p>
+            Để đơn giản hóa việc phân tích mảng phẳng, ta có thể sử dụng biến đổi sang không gian $u-v$:
+        </p>
+        <div style="text-align: center; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            $$ u = \sin\theta \cos\phi $$
+            $$ v = \sin\theta \sin\phi $$
+        </div>
+        <p>
+            Trong hệ tọa độ này, <strong>vùng nhìn thấy (visible region)</strong> là vòng tròn đơn vị thỏa mãn $u^2 + v^2 \le 1$. 
+            Mọi giá trị nằm ngoài vòng tròn này tương ứng với các sóng không lan truyền (evanescent waves) và không bức xạ ra không gian xa.
+        </p>
+
+        <h3>4. Lái búp sóng và Pha kích thích ($\beta_x, \beta_y$)</h3>
+        <p>
+            Để cực đại bức xạ (búp sóng chính) hướng về góc quét mong muốn $(\theta_0, \phi_0)$, ta phải điều chỉnh pha kích thích giữa các phần tử sao cho $\psi_x = 0$ và $\psi_y = 0$ tại hướng đó:
+        </p>
+
+        <div style="text-align: center; background: #fff4e5; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffeeba;">
+            $$ \beta_x = -k d_x \sin\theta_0 \cos\phi_0 $$
+            $$ \beta_y = -k d_y \sin\theta_0 \sin\phi_0 $$
+        </div>
+
+        <h3>5. Các thông số đặc trưng trên đồ thị Polar (dB Scale)</h3>
+        <ul>
+            <li><strong>Búp sóng chính (Main Lobe):</strong> Là phần bức xạ tập trung năng lượng cao nhất.</li>
+            <li><strong>Mức búp phụ (Side Lobe Level - SLL):</strong> Tỉ số giữa đỉnh búp phụ lớn nhất và đỉnh búp chính. Với mảng đều, SLL lý tưởng là khoảng $-13.2 \text{ dB}$.</li>
+            <li><strong>Búp sóng giả (Grating Lobes):</strong> Xuất hiện khi khoảng cách $d_x$ hoặc $d_y$ quá lớn ($> \lambda$). Điều này làm xuất hiện thêm các đỉnh bức xạ mạnh bằng búp chính ở các hướng không mong muốn.</li>
+        </ul>
+
+        <h3>6. Tài liệu tham khảo</h3>
+        <ul style="list-style-type: decimal; padding-left: 20px;">
+            <li>Constantine A. Balanis, <em>Antenna Theory: Analysis and Design</em>, 4th Edition, Wiley (Chương 6: Arrays - Planar Arrays).</li>
+            <li>Stutzman & Thiele, <em>Antenna Theory and Design</em>, 3rd Edition.</li>
+        </ul>
+    </div>
 
 <script src="script-planar.js"></script>
 </body>

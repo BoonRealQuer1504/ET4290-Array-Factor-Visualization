@@ -3,8 +3,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnCalcPhase = document.getElementById('btnCalcPhase');
     const btnAddCut = document.getElementById('btnAddCut');
     const btnClearAll = document.getElementById('btnClearAll');
-
-    // Khởi tạo đồ thị Polar trống với thang dB
     initPolarChart();
 
     // 1. Tính pha β tự động
@@ -43,7 +41,6 @@ document.addEventListener("DOMContentLoaded", function () {
         location.reload();
     });
 
-    // --- HÀM HỖ TRỢ ---
     function getParams() {
         const f = parseFloat(document.getElementById('f').value);
         const lambda = 3e8 / (f * 1e9);
