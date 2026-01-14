@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Mô phỏng Mảng Anten Phẳng - Thang đo dB</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        h2, h3 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .input-group { display: flex; flex-direction: column; }
+        label { font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-primary { background-color: #007bff; color: white; width: 100%; margin-top: 20px; font-size: 16px; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-purple { background-color: #6610f2; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .info-panel { background: #e9ecef; padding: 10px; border-radius: 5px; margin-top: 15px; font-family: monospace; font-size: 14px; }
+        .chart-container { width: 100%; height: 600px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>Thông số Mảng Anten Phẳng</h2>
+        <form id="planarForm">
+            <div class="control-grid">
+                <div class="input-group"><label>Số phần tử X (M):</label><input type="number" id="M" value="5"></div>
+                <div class="input-group"><label>Số phần tử Y (N):</label><input type="number" id="N" value="5"></div>
+                <div class="input-group"><label>dx (m):</label><input type="number" id="dx" value="0.0625" step="any"></div>
+                <div class="input-group"><label>dy (m):</label><input type="number" id="dy" value="0.0625" step="any"></div>
+                <div class="input-group"><label>Tần số f (GHz):</label><input type="number" id="f" value="2.4" step="any"></div>
+                <div class="input-group"><label>Pha βx (độ):</label><input type="number" id="betax" value="0" step="any"></div>
+                <div class="input-group"><label>Pha βy (độ):</label><input type="number" id="betay" value="0" step="any"></div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; border: 1px dashed #28a745; border-radius: 8px;">
+                <label style="color: #28a745; font-weight: bold;">Lái búp sóng (Scan Direction):</label>
+                <div style="display: flex; gap: 15px; margin-top: 10px; align-items: flex-end;">
+                    <div class="input-group"><label>θ₀ (độ):</label><input type="number" id="theta0" value="0"></div>
+                    <div class="input-group"><label>φ₀ (độ):</label><input type="number" id="phi0" value="0"></div>
+                    <button type="button" id="btnCalcPhase" class="btn-success">Cập nhật β từ góc quét</button>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">TÍNH TOÁN & CẬP NHẬT 3D</button>
+        </form>
+        <div id="info" class="info-panel"></div>
+    </div>
+
+    <div class="card">
+        <h3>1. Hệ tọa độ u-v (Theo Figure 6.31 Balanis)</h3>
+        <div id="uvChart" class="chart-container"></div>
+    </div>
+
+    <div class="card">
+        <h3>2. Hệ tọa độ thực Oxyz</h3>
+        <div id="realSpaceChart" class="chart-container"></div>
+    </div>
+
+    <div class="card">
+        <h3>3. Phân tích mặt cắt 2D (Polar Plot - dB Scale)</h3>
+        <p style="font-size: 0.9em; color: #666;">Nhập góc φ để cắt lớp bức xạ. Thang đo dB giúp nhìn rõ búp phụ (Sidelobes).</p>
+        <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center;">
+            <label>Góc cắt φ (độ):</label>
+            <input type="number" id="phiCut" value="0" style="width: 80px;">
+            <button type="button" id="btnAddCut" class="btn-purple">+ Thêm mặt cắt này</button>
+        </div>
+        <div id="polarChart" class="chart-container"></div>
+        
+        <div style="text-align: right; margin-top: 20px;">
+            <button type="button" id="btnClearAll" class="btn-danger">🗑️ Xóa sạch & Reset</button>
+        </div>
+    </div>
+</div>
+
+<script src="script-planar.js"></script>
+</body>
+</html>

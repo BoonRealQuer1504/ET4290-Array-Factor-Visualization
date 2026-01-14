@@ -3,97 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antenna Array Calculator - Large View</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Antenna Array Factor Calculator - Linear Array</title>
+    
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']]
-    }
-  };
-</script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: auto; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        h1, h2, h3 { color: #333; }
+        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; }
+        
+        /* Form styling tương tự Planar */
+        .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .input-group { display: flex; flex-direction: column; }
+        label { font-size: 0.9em; font-weight: bold; margin-bottom: 8px; color: #555; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        
+        /* Buttons */
+        button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        #arrayForm button[type="submit"] { background-color: #007bff; color: white; width: 100%; margin-top: 20px; font-size: 16px; }
+        #arrayForm button[type="submit"]:hover { background-color: #0056b3; }
+        
+        .mode-buttons { display: flex; gap: 10px; margin-top: 5px; flex-wrap: wrap; }
+        .btn-mode { font-size: 12px; padding: 8px 12px; }
+        
+        /* Metrics Badge */
+        .metric-badge { background: #e8f5e9; padding: 15px; border-radius: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; text-align: center; border-left: 5px solid #28a745; }
+        
+        .info-panel { background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 15px; font-family: monospace; border: 1px solid #eee; }
+        .chart-section { margin-bottom: 30px; }
+        
+        header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; padding: 40px; border-radius: 10px; margin-bottom: 30px; 
+        }
+        .nav-link { display: inline-block; background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 15px; }
+    </style>
 </head>
 <body>
 
-    <header style="text-align: left; padding: 30px 40px;">
-        <h1 style="margin-bottom: 10px;">Antenna Array Factor Calculator</h1>
-        <p style="font-size: 1.1em; line-height: 1.6; max-width: 900px; margin: 0;">
-            <strong>Antenna Array Factor Calculator</strong> là một công cụ phần mềm chuyên dụng để mô phỏng và phân tích đồ thị bức xạ của các mảng anten tuyến tính. 
-            Công cụ trực tuyến miễn phí này cho phép dự đoán <strong>Hệ số mảng (Array Factor - AF)</strong>, 
-            <strong>Độ định hướng (Directivity)</strong> và <strong>Độ rộng búp sóng</strong> với nhiều cấu hình khác nhau.
+<div class="container">
+    <header>
+        <h1 style="margin: 0;">Antenna Array Factor Calculator</h1>
+        <p style="font-size: 1.1em; opacity: 0.9; max-width: 900px; margin: 15px 0;">
+            Công cụ phân tích <strong>Mảng Tuyến Tính (Linear Array)</strong> chuyên sâu. 
+            Dự đoán Hệ số mảng, Độ định hướng và các tham số búp sóng thời gian thực.
         </p>
-        <div style="margin-top: 15px; font-size: 0.9em; opacity: 0.9;">
-            <span>✨ Mảng tuyến tính đồng nhất (ULA)</span> | 
-            <span>✨ Chế độ Broadside & End-fire</span> | 
-            <span>✨ Mô phỏng 2D/3D thời gian thực</span>
+        <div style="font-size: 0.9em; margin-bottom: 15px;">
+            ✨ Mảng tuyến tính đồng nhất (ULA) | ✨ Chế độ Broadside & End-fire | ✨ Phân tích dB Scale
         </div>
+        <a href="planar.html" class="nav-link">Chuyển sang Mảng Phẳng (2D) →</a>
     </header>
 
-    <section id="inputs">
+    <div class="card">
+        <h2>Thông số cấu hình mảng</h2>
         <form id="arrayForm">
-            <label>Số phần tử (N): <input type="number" id="N" value="8" min="1"></label>
-            <label>Khoảng cách d (mét): <input type="number" id="d_meter" value="0.0625" step="any"></label>
-            <label>Tần số (GHz): <input type="number" id="f" value="2.4" step="any"></label>
-            <div style="margin: 10px 0; padding: 10px; border: 1px dashed #ccc; border-radius: 4px;">
-                <span style="font-weight:bold; margin-right:10px;">Chế độ:</span>
-                <button type="button" id="btnManual" style="padding: 5px 10px; background: #6c757d; font-size: 12px;">Manual</button>
-                <button type="button" id="btnBroadside" style="padding: 5px 10px; background: #28a745; font-size: 12px;">Broadside (β=0)</button>
-                <button type="button" id="btnEndfire" style="padding: 5px 10px; background: #dc3545; font-size: 12px;">Endfire (β=-kd)</button>
+            <div class="control-grid">
+                <div class="input-group">
+                    <label>Số phần tử (N):</label>
+                    <input type="number" id="N" value="8" min="1">
+                </div>
+                <div class="input-group">
+                    <label>Khoảng cách d (mét):</label>
+                    <input type="number" id="d_meter" value="0.0625" step="any">
+                </div>
+                <div class="input-group">
+                    <label>Tần số (GHz):</label>
+                    <input type="number" id="f" value="2.4" step="any">
+                </div>
+                <div class="input-group">
+                    <label>Pha kích thích β (độ):</label>
+                    <input type="number" id="beta_deg" value="0" step="1">
+                </div>
             </div>
-            <label>Pha kích thích β (độ): <input type="number" id="beta_deg" value="0" step="1"></label>
-            <button type="submit">Tính & Vẽ</button>
-        </form>
-        <div id="info"></div>
-    </section>
 
-    <div style="display: flex; flex-direction: column; align-items: center; gap: 30px; max-width: 1000px; margin: 0 auto;">
-        
-        <section style="width: 100%; height: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-            <h3 style="margin-top: 0;">Array Factor Pattern (dB)</h3>
-            <div style="width: 100%; height: 420px;">
+            <div style="margin-top: 20px; padding: 15px; background: #fdfdfe; border: 1px dashed #ccc; border-radius: 8px;">
+                <label style="display: block; margin-bottom: 10px; color: #444;">Thiết lập nhanh chế độ bức xạ:</label>
+                <div class="mode-buttons">
+                    <button type="button" id="btnManual" style="background: #6c757d; color: white;">Manual</button>
+                    <button type="button" id="btnBroadside" style="background: #28a745; color: white;">Broadside (β=0)</button>
+                    <button type="button" id="btnEndfire" style="background: #dc3545; color: white;">Endfire (β=-kd)</button>
+                </div>
+            </div>
+
+            <button type="submit">TÍNH TOÁN & CẬP NHẬT ĐỒ THỊ</button>
+        </form>
+        <div id="info" class="info-panel"></div>
+    </div>
+
+    <div class="card">
+        <h3>Kết quả đặc tính bức xạ</h3>
+        <div id="metrics" class="metric-badge">
+            <div><label>HPBW</label><div style="font-size: 1.5em; font-weight: bold;"><span id="hpbw-val">-</span>°</div></div>
+            <div><label>SLL (Max)</label><div style="font-size: 1.5em; font-weight: bold; color: #d63384;"><span id="sll-val">-</span> dB</div></div>
+            <div><label>FNBW</label><div style="font-size: 1.5em; font-weight: bold;"><span id="fnbw-val">-</span>°</div></div>
+            <div><label>Directivity</label><div style="font-size: 1.5em; font-weight: bold; color: #007bff;"><span id="dir-val">-</span> dBi</div></div>
+        </div>
+    </div>
+
+    <div style="display: grid; gap: 30px;">
+        <section class="card chart-section">
+            <h3 style="margin-top: 0; color: #d63384;">1. Array Factor Pattern (dB)</h3>
+            <div style="width: 100%; height: 450px;">
                 <canvas id="patternChart"></canvas>
             </div>
         </section>
 
-        <section style="width: 100%; height: 650px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-            <h3 style="margin-top: 0;"> Polar Plot of Radiation Pattern (dB)</h3>
-            <div style="width: 100%; height: 570px;">
+        <section class="card chart-section">
+            <h3 style="margin-top: 0; color: #6610f2;">2. Polar Plot of Radiation Pattern (dB)</h3>
+            <div style="width: 100%; height: 550px;">
                 <canvas id="polarChart"></canvas>
             </div>
         </section>
 
-        <section style="width: 100%; height: 650px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-            <h3 style="margin-top: 0;"> 3D Radiation Pattern</h3>
-            <div id="threeDChart" style="width: 100%; height: 570px;"></div>
+        <section class="card chart-section">
+            <h3 style="margin-top: 0; color: #007bff;">3. 3D Radiation Pattern</h3>
+            <div id="threeDChart" style="width: 100%; height: 550px;"></div>
         </section>
-        
     </div>
 
-    <section id="controls">
-        <button id="clearBtn">Clear All</button>
-    </section>
-
-    <section id="metrics" style="display: flex; justify-content: space-around; background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <div><strong>HPBW:</strong> <span id="hpbw-val">-</span>°</div>
-        <div><strong>SLL:</strong> <span id="sll-val">-</span> dB</div>
-        <div><strong>FNBW:</strong> <span id="fnbw-val">-</span>°</div>
-        <div><strong>Directivity:</strong> <span id="dir-val">-</span> dBi</div>
-    </section>
-
-    <section id="table">
+    <div class="card">
         <h3>Bảng giá trị đặc biệt (mỗi 10°)</h3>
-        <div id="resultsTable"></div>
-    </section>
+        <div id="resultsTable" style="overflow-x: auto;"></div>
+        <div style="text-align: right; margin-top: 20px;">
+            <button id="clearBtn" style="background: #dc3545; color: white;">🗑️ Clear All Data</button>
+        </div>
+    </div>
 
-
-    <section id="theory-section" style="text-align: left; line-height: 1.6; padding: 30px;">
+    <div class="card" id="theory-section" style="line-height: 1.7;">
         <h2 style="text-align: center; color: #764ba2;">Cơ sở lý thuyết & Công thức</h2>
-        <hr>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        
+        
+
+
+    
         
         <h3>1. Giới thiệu</h3>
         <p>Hệ thống mảng anten (Antenna Array) là sự kết hợp của nhiều phần tử anten giống nhau nhằm đạt được đặc tính bức xạ mong muốn, như tăng độ định hướng và khả năng quét búp sóng điện tử mà không cần di chuyển vật lý anten.</p>
