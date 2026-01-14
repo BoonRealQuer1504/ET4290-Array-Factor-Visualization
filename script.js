@@ -40,10 +40,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const af_values = [];
         let max_af = 0;
 
-        for (let th = -90; th <= 90; th += 1) {
+        for (let th = -90; th <= 90; th += 0.1) {
             const th_rad = (th * Math.PI) / 180;
             // Công thức psi tổng quát có beta: ψ = kd*sin(θ) + β
-            const psi = (2 * Math.PI * d_lambda * Math.sin(th_rad)) + beta_rad;
+            const psi = (2 * Math.PI * d_lambda * Math.cos(th_rad)) + beta_rad;
 
             const af = Math.abs(psi) < 1e-10 
                 ? 1 
@@ -69,10 +69,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         calculatePerformance(theta, pattern_dB, N, d_lambda);
 
-        updateTableHorizontal(
-            theta.filter((_, i) => i % 10 === 0),
-            pattern_dB.filter((_, i) => i % 10 === 0)
-        );
+        const filteredTheta = [];
+        const filteredDB = [];
+
+        theta.forEach((th, i) => {
+            // Sử dụng Math.round để tránh sai số dấu phẩy động và kiểm tra chia hết cho 10
+            if (Math.abs(Math.round(th * 10) / 10 % 10) < 0.01) {
+                filteredTheta.push(Math.round(th));
+                filteredDB.push(pattern_dB[i]);
+            }
+        });
+
+        updateTableHorizontal(filteredTheta, filteredDB);
     });
 
     // Hàm vẽ bảng nằm ngang
