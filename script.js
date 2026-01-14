@@ -1,8 +1,11 @@
 let chart;
 let polarChart;
+const plotColors = ['blue', 'red', 'green', 'orange', 'purple', 'teal', 'magenta', 'black'];
+let colorIndex = 0;
+let isEndfireMode = false; // Cờ kiểm tra chế độ Endfire
 
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. Biểu đồ Cartesian
+    // 2D 
     chart = new Chart(document.getElementById('patternChart').getContext('2d'), {
         type: 'line',
         data: { datasets: [] },
@@ -11,13 +14,13 @@ document.addEventListener("DOMContentLoaded", function () {
             maintainAspectRatio: false,
             scales: {
                 x: { type: 'linear', min: -180, max: 180, title: { display: true, text: 'Góc θ (độ)' }, ticks: { stepSize: 30 } },
-                y: { min: -40, max: 0, title: { display: true, text: 'Gain (dB)' } }
+                y: { min:-40, max: 0, title: { display: true, text: 'Gain (dB)' } }
             },
             plugins: { legend: { position: 'top' } }
         }
     });
 
-    // 2. Biểu đồ Polar (Đã sửa startAngle: 0 để 0 độ ở hướng 12 giờ)
+    // Polar
     polarChart = new Chart(document.getElementById('polarChart').getContext('2d'), {
         type: 'radar',
         data: { labels: [], datasets: [] },
@@ -38,12 +41,56 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    const betaInput = document.getElementById('beta_deg');
+    const dInput = document.getElementById('d_meter');
+    const fInput = document.getElementById('f');
+
+    function setBetaState(readOnly, val) {
+        betaInput.readOnly = readOnly;
+        if (val !== null) betaInput.value = val;
+        betaInput.style.backgroundColor = readOnly ? "#e9ecef" : "white";
+    }
+
+    // Manual
+    document.getElementById('btnManual').addEventListener('click', () => {
+        isEndfireMode = false;
+        setBetaState(false, null);
+    });
+
+    // Broadside: Beta = 0
+    document.getElementById('btnBroadside').addEventListener('click', () => {
+        isEndfireMode = false;
+        setBetaState(true, 0);
+    });
+
+    // Endfire: Beta = -kd 
+    document.getElementById('btnEndfire').addEventListener('click', () => {
+        isEndfireMode = true;
+        updateEndfireBeta();
+    });
+
+    // Beta Endfire: beta = -2 * pi * d / lambda (rad) -> degree
+    function updateEndfireBeta() {
+        if (!isEndfireMode) return;
+        
+        const d = parseFloat(dInput.value);
+        const f = parseFloat(fInput.value);
+        if (!d || !f) return;
+
+        const lambda = 3e8 / (f * 1e9);
+        const d_lambda = d / lambda;
+        
+        // Beta (độ) = -360 * (d/lambda)
+        const betaVal = -360 * d_lambda;
+        
+        setBetaState(true, betaVal.toFixed(2));
+    }
+
+    dInput.addEventListener('input', updateEndfireBeta);
+    fInput.addEventListener('input', updateEndfireBeta);
+
     document.getElementById('arrayForm').addEventListener('submit', function (e) {
         e.preventDefault();
-
-        chart.data.datasets = [];
-        polarChart.data.datasets = [];
-
         const N = parseInt(document.getElementById('N').value);
         const d_meter = parseFloat(document.getElementById('d_meter').value);
         const f_GHz = parseFloat(document.getElementById('f').value);
@@ -60,9 +107,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const polarLabels = [];
         const polarData = [];
 
-        // Quét 360 độ để lấy dữ liệu
         for (let th = 0; th <= 360; th += 1) {
             const th_rad = (th * Math.PI) / 180;
+            // Balanis
             const psi = (2 * Math.PI * d_lambda * Math.cos(th_rad)) + beta_rad;
 
             const af = Math.abs(psi) < 1e-10 
@@ -70,26 +117,23 @@ document.addEventListener("DOMContentLoaded", function () {
                 : Math.abs( Math.sin((N * psi) / 2) / (N * Math.sin(psi / 2)) );
             
             let db = 20 * Math.log10(af + 1e-12);
-            if (db < -40) db = -40;
+            if (db < -60) db = -60;
 
-            // Dữ liệu cho Polar (0 đến 360)
             polarData.push(db);
             polarLabels.push(th % 30 === 0 ? th + "°" : "");
 
-            // Dữ liệu cho Cartesian (Chuyển sang dải -180 đến 180)
             theta.push(th > 180 ? th - 360 : th);
             pattern_dB.push(db);
         }
 
-        const color = `blue`;
+        const color = plotColors[colorIndex % plotColors.length];
+        colorIndex++; 
 
-        // Sắp xếp dữ liệu Cartesian theo X tăng dần để không bị đường kẻ ngang nối ngược
         const sortedData = theta.map((th, i) => ({ x: th, y: pattern_dB[i] }))
                                 .sort((a, b) => a.x - b.x);
 
-        // Vẽ Cartesian
         chart.data.datasets.push({
-            label: `N=${N}, β=${beta_deg}°`,
+            label: `N=${N}, d=${d_lambda.toFixed(2)}λ, β=${beta_deg.toFixed(1)}°`, // Label chi tiết hơn để phân biệt
             data: sortedData,
             borderColor: color,
             borderWidth: 2,
@@ -97,9 +141,10 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         chart.update();
 
-        // Vẽ Polar
-        polarChart.data.labels = polarLabels;
+        // Cập nhật Polar Chart tương tự
+        polarChart.data.labels = polarLabels; // Label trục giữ nguyên
         polarChart.data.datasets.push({
+            label: `Run ${colorIndex}`, // Polar chart cần label để tooltip hiển thị đúng nếu muốn
             data: polarData,
             borderColor: color,
             borderWidth: 2,
@@ -108,12 +153,17 @@ document.addEventListener("DOMContentLoaded", function () {
         polarChart.update();
 
         calculatePerformance(theta, pattern_dB, N, d_lambda);
+        update3DPattern(N, d_lambda, beta_rad);
         updateTableHorizontal(theta, pattern_dB);
     });
 
     document.getElementById('clearBtn').addEventListener('click', () => {
         chart.data.datasets = []; chart.update();
         polarChart.data.datasets = []; polarChart.update();
+        colorIndex = 0; // Reset màu về đầu
+        isEndfireMode = false; // Reset mode nếu muốn (tùy chọn)
+        Plotly.purge('threeDChart');
+        setBetaState(false, null); // Reset ô input về mặc định
         document.getElementById('resultsTable').innerHTML = '';
         ['hpbw-val', 'sll-val', 'fnbw-val', 'dir-val'].forEach(id => document.getElementById(id).innerText = '-');
     });
@@ -124,40 +174,133 @@ document.addEventListener("DOMContentLoaded", function () {
                             .sort((a, b) => a.th - b.th);
         let html = '<div style="overflow-x: auto;"><table border="1" style="width:100%; border-collapse: collapse;">';
         html += '<tr style="background:#eee;"><th>θ</th>' + filtered.map(v => `<td>${v.th}</td>`).join('') + '</tr>';
-        html += '<tr><th>dB</th>' + filtered.map(v => `<td>${v.db.toFixed(1)}</td>`).join('') + '</tr></table></div>';
+        html += '<tr><th>dB (Mới nhất)</th>' + filtered.map(v => `<td>${v.db.toFixed(1)}</td>`).join('') + '</tr></table></div>';
         document.getElementById('resultsTable').innerHTML = html;
     }
 
     function calculatePerformance(theta, dB, N, d_lambda) {
-        const maxDB = Math.max(...dB);
-        const centerIdx = dB.indexOf(maxDB);
+        // 1. TĂNG ĐỘ MỊN ĐỂ TÌM ĐIỂM CHÍNH XÁC (Quét nội bộ 0.01 độ)
+        const beta_deg = parseFloat(document.getElementById('beta_deg').value);
+        const beta_rad = (beta_deg * Math.PI) / 180;
+        
+        function getGainAt(angleDeg) {
+            const th_rad = (angleDeg * Math.PI) / 180;
+            const psi = (2 * Math.PI * d_lambda * Math.cos(th_rad)) + beta_rad;
+            const af = Math.abs(psi) < 1e-10 
+                ? 1 
+                : Math.abs(Math.sin((N * psi) / 2) / (N * Math.sin(psi / 2)));
+            return 20 * Math.log10(af + 1e-12);
+        }
 
-        let left3dB = centerIdx;
-        while (left3dB > 0 && dB[left3dB] > maxDB - 3) left3dB--;
-        let right3dB = centerIdx;
-        while (right3dB < dB.length - 1 && dB[right3dB] > maxDB - 3) right3dB++;
-        const hpbw = Math.abs(theta[right3dB] - theta[left3dB]);
+        // Tìm đỉnh thực tế (thường là hướng búp chính)
+        let maxDB = -Infinity;
+        let peakAngle = 0;
+        for (let a = 0; a <= 180; a += 0.1) {
+            let g = getGainAt(a);
+            if (g > maxDB) { maxDB = g; peakAngle = a; }
+        }
 
-        let leftNull = centerIdx;
-        while (leftNull > 0 && dB[leftNull] >= dB[leftNull - 1]) leftNull--;
-        let rightNull = centerIdx;
-        while (rightNull < dB.length - 1 && dB[rightNull] >= dB[rightNull + 1]) rightNull++;
-        const fnbw = Math.abs(theta[rightNull] - theta[leftNull]);
+        // 2. TÌM HPBW (Half Power Beamwidth)
+        let left3dB = peakAngle, right3dB = peakAngle;
+        while (left3dB > peakAngle - 180 && getGainAt(left3dB) > maxDB - 3) left3dB -= 0.01;
+        while (right3dB < peakAngle + 180 && getGainAt(right3dB) > maxDB - 3) right3dB += 0.01;
+        const hpbw = Math.abs(right3dB - left3dB);
 
-        let maxSideLobe = -Infinity;
-        for (let i = 0; i < dB.length; i++) {
-            if (i < leftNull || i > rightNull) {
-                if (dB[i] > maxSideLobe) maxSideLobe = dB[i];
+        // 3. TÌM FNBW (First Null Beamwidth)
+        let leftNull = peakAngle, rightNull = peakAngle;
+        // Tìm điểm cực tiểu đầu tiên về hai phía
+        while (leftNull > peakAngle - 180 && getGainAt(leftNull - 0.01) < getGainAt(leftNull)) leftNull -= 0.01;
+        while (leftNull > peakAngle - 180 && getGainAt(leftNull - 0.01) > getGainAt(leftNull)) leftNull -= 0.01;
+        
+        while (rightNull < peakAngle + 180 && getGainAt(rightNull + 0.01) < getGainAt(rightNull)) rightNull += 0.01;
+        while (rightNull < peakAngle + 180 && getGainAt(rightNull + 0.01) > getGainAt(rightNull)) rightNull += 0.01;
+        const fnbw = Math.abs(rightNull - leftNull);
+
+        // 4. TÌM SLL (Side Lobe Level) - Tìm đỉnh búp phụ cao nhất
+        let maxSLL = -Infinity;
+        for (let a = 0; a <= 180; a += 0.1) {
+            // Chỉ xét các điểm ngoài vùng búp chính (ngoài khoảng Null)
+            if (a < Math.min(leftNull, rightNull) || a > Math.max(leftNull, rightNull)) {
+                let g = getGainAt(a);
+                // Kiểm tra xem có phải là đỉnh địa phương không (Local Maxima)
+                if (g > getGainAt(a - 0.1) && g > getGainAt(a + 0.1)) {
+                    if (g > maxSLL) maxSLL = g;
+                }
             }
         }
-        const sllRelative = maxSideLobe - maxDB;
+        const sllRelative = maxSLL - maxDB;
 
-        const directivityVal = 2 * N * d_lambda;
-        const directivityDB = 10 * Math.log10(directivityVal);
+        // 5. DIRECTIVITY (Tính theo công thức tích phân xấp xỉ ULA)
+        // D = N / (1 + 2/N * sum_{m=1}^{N-1} (N-m) * j0(m*k*d) * cos(m*beta))
+        // Tuy nhiên để đơn giản và chuẩn Balanis cho mảng lớn:
+        let directivityDB;
+        if (Math.abs(beta_deg) < 1) { // Broadside
+            directivityDB = 10 * Math.log10(2 * N * d_lambda);
+        } else if (Math.abs(Math.abs(beta_deg) - Math.abs(360 * d_lambda)) < 1) { // Endfire
+            directivityDB = 10 * Math.log10(4 * N * d_lambda);
+        } else {
+            directivityDB = 10 * Math.log10(2 * N * d_lambda); // Tổng quát
+        }
 
-        document.getElementById('hpbw-val').innerText = (hpbw > 0) ? hpbw.toFixed(2) : "N/A";
+        document.getElementById('hpbw-val').innerText = (hpbw > 0 && hpbw < 360) ? hpbw.toFixed(3) : "N/A";
         document.getElementById('sll-val').innerText = (isFinite(sllRelative) && sllRelative < 0) ? sllRelative.toFixed(2) : "N/A";
-        document.getElementById('fnbw-val').innerText = (fnbw > 0) ? fnbw.toFixed(2) : "N/A";
-        document.getElementById('dir-val').innerText = (directivityDB > 0) ? directivityDB.toFixed(2) : "N/A";
+        document.getElementById('fnbw-val').innerText = (fnbw > 0 && fnbw < 360) ? fnbw.toFixed(3) : "N/A";
+        document.getElementById('dir-val').innerText = directivityDB.toFixed(2);
+    }
+
+    function update3DPattern(N, d_lambda, beta_rad) {
+        let dataX = [], dataY = [], dataZ = [], colors = [];
+        const step = 5; // Bước nhảy (độ) để vẽ lưới 3D, có thể chỉnh 2 hoặc 5 để mượt hơn
+
+        for (let theta = 0; theta <= 180; theta += step) {
+            let th_rad = (theta * Math.PI) / 180;
+            let rowX = [], rowY = [], rowZ = [], rowCol = [];
+            
+            // Tính Array Factor cho góc theta này
+            const psi = (2 * Math.PI * d_lambda * Math.cos(th_rad)) + beta_rad;
+            const af = Math.abs(psi) < 1e-10 ? 1 : Math.abs(Math.sin((N * psi) / 2) / (N * Math.sin(psi / 2)));
+            
+            for (let phi = 0; phi <= 360; phi += step) {
+                let ph_rad = (phi * Math.PI) / 180;
+                
+                // Chuyển đổi sang hệ tọa độ Đề-các (Cartesian 3D)
+                // Giả sử mảng anten đặt dọc theo trục Z
+                let r = af; 
+                let x = r * Math.sin(th_rad) * Math.cos(ph_rad);
+                let y = r * Math.sin(th_rad) * Math.sin(ph_rad);
+                let z = r * Math.cos(th_rad);
+
+                rowX.push(x);
+                rowY.push(y);
+                rowZ.push(z);
+                rowCol.push(r);
+            }
+            dataX.push(rowX);
+            dataY.push(rowY);
+            dataZ.push(rowZ);
+            colors.push(rowCol);
+        }
+
+        const plotData = [{
+            type: 'surface',
+            x: dataX,
+            y: dataY,
+            z: dataZ,
+            surfacecolor: colors,
+            colorscale: 'Jet',
+            colorbar: { title: 'AF', thickness: 10 }
+        }];
+
+        const layout = {
+            margin: { l: 0, r: 0, b: 0, t: 0 },
+            scene: {
+                xaxis: { title: 'X', range: [-1, 1] },
+                yaxis: { title: 'Y', range: [-1, 1] },
+                zaxis: { title: 'Z (Trục mảng)', range: [-1, 1] },
+                aspectmode: 'cube'
+            }
+        };
+
+        Plotly.newPlot('threeDChart', plotData, layout);
     }
 });
