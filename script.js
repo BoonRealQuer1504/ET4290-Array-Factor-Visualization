@@ -17,14 +17,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // 2. Biểu đồ Polar (Xoay 0 độ lên đỉnh, lưới tròn)
+    // 2. Biểu đồ Polar (Đã sửa startAngle: 0 để 0 độ ở hướng 12 giờ)
     polarChart = new Chart(document.getElementById('polarChart').getContext('2d'), {
         type: 'radar',
         data: { labels: [], datasets: [] },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            startAngle: -90, 
+            startAngle: 0, 
             scales: {
                 r: {
                     min: -40,
@@ -41,7 +41,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('arrayForm').addEventListener('submit', function (e) {
         e.preventDefault();
 
-        // Xóa các dataset cũ để vẽ đè cái mới (hoặc bấm Clear All để sạch hoàn toàn)
         chart.data.datasets = [];
         polarChart.data.datasets = [];
 
@@ -59,12 +58,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const theta = [];
         const pattern_dB = [];
         const polarLabels = [];
+        const polarData = [];
 
-        // Quét 360 độ để hình tròn đầy đủ
+        // Quét 360 độ để lấy dữ liệu
         for (let th = 0; th <= 360; th += 1) {
             const th_rad = (th * Math.PI) / 180;
-            // Dùng Math.sin để búp chính nằm ngang giống mẫu bạn gửi
-            const psi = (2 * Math.PI * d_lambda * Math.sin(th_rad)) + beta_rad;
+            const psi = (2 * Math.PI * d_lambda * Math.cos(th_rad)) + beta_rad;
 
             const af = Math.abs(psi) < 1e-10 
                 ? 1 
@@ -73,17 +72,25 @@ document.addEventListener("DOMContentLoaded", function () {
             let db = 20 * Math.log10(af + 1e-12);
             if (db < -40) db = -40;
 
+            // Dữ liệu cho Polar (0 đến 360)
+            polarData.push(db);
+            polarLabels.push(th % 30 === 0 ? th + "°" : "");
+
+            // Dữ liệu cho Cartesian (Chuyển sang dải -180 đến 180)
             theta.push(th > 180 ? th - 360 : th);
             pattern_dB.push(db);
-            polarLabels.push(th % 30 === 0 ? th + "°" : "");
         }
 
         const color = `blue`;
 
+        // Sắp xếp dữ liệu Cartesian theo X tăng dần để không bị đường kẻ ngang nối ngược
+        const sortedData = theta.map((th, i) => ({ x: th, y: pattern_dB[i] }))
+                                .sort((a, b) => a.x - b.x);
+
         // Vẽ Cartesian
         chart.data.datasets.push({
             label: `N=${N}, β=${beta_deg}°`,
-            data: theta.map((th, i) => ({ x: th, y: pattern_dB[i] })),
+            data: sortedData,
             borderColor: color,
             borderWidth: 2,
             pointRadius: 0
@@ -93,19 +100,17 @@ document.addEventListener("DOMContentLoaded", function () {
         // Vẽ Polar
         polarChart.data.labels = polarLabels;
         polarChart.data.datasets.push({
-            data: pattern_dB,
+            data: polarData,
             borderColor: color,
             borderWidth: 2,
             pointRadius: 0
         });
         polarChart.update();
 
-        // Cập nhật các hàm phụ trợ
         calculatePerformance(theta, pattern_dB, N, d_lambda);
         updateTableHorizontal(theta, pattern_dB);
     });
 
-    // ... (Hàm clearBtn, calculatePerformance và updateTableHorizontal giữ nguyên như trước)
     document.getElementById('clearBtn').addEventListener('click', () => {
         chart.data.datasets = []; chart.update();
         polarChart.data.datasets = []; polarChart.update();
@@ -114,7 +119,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function updateTableHorizontal(theta, dB) {
-        let filtered = theta.map((th, i) => ({th, db: dB[i]})).filter(v => v.th >= -180 && v.th <= 180 && v.th % 20 === 0);
+        let filtered = theta.map((th, i) => ({th, db: dB[i]}))
+                            .filter(v => v.th >= -180 && v.th <= 180 && v.th % 20 === 0)
+                            .sort((a, b) => a.th - b.th);
         let html = '<div style="overflow-x: auto;"><table border="1" style="width:100%; border-collapse: collapse;">';
         html += '<tr style="background:#eee;"><th>θ</th>' + filtered.map(v => `<td>${v.th}</td>`).join('') + '</tr>';
         html += '<tr><th>dB</th>' + filtered.map(v => `<td>${v.db.toFixed(1)}</td>`).join('') + '</tr></table></div>';
@@ -122,8 +129,35 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function calculatePerformance(theta, dB, N, d_lambda) {
-        const directivity = 10 * Math.log10(2 * N * d_lambda);
-        document.getElementById('dir-val').innerText = directivity.toFixed(1);
-        // Các thông số khác bạn có thể tự update logic tìm kiếm đỉnh
+        const maxDB = Math.max(...dB);
+        const centerIdx = dB.indexOf(maxDB);
+
+        let left3dB = centerIdx;
+        while (left3dB > 0 && dB[left3dB] > maxDB - 3) left3dB--;
+        let right3dB = centerIdx;
+        while (right3dB < dB.length - 1 && dB[right3dB] > maxDB - 3) right3dB++;
+        const hpbw = Math.abs(theta[right3dB] - theta[left3dB]);
+
+        let leftNull = centerIdx;
+        while (leftNull > 0 && dB[leftNull] >= dB[leftNull - 1]) leftNull--;
+        let rightNull = centerIdx;
+        while (rightNull < dB.length - 1 && dB[rightNull] >= dB[rightNull + 1]) rightNull++;
+        const fnbw = Math.abs(theta[rightNull] - theta[leftNull]);
+
+        let maxSideLobe = -Infinity;
+        for (let i = 0; i < dB.length; i++) {
+            if (i < leftNull || i > rightNull) {
+                if (dB[i] > maxSideLobe) maxSideLobe = dB[i];
+            }
+        }
+        const sllRelative = maxSideLobe - maxDB;
+
+        const directivityVal = 2 * N * d_lambda;
+        const directivityDB = 10 * Math.log10(directivityVal);
+
+        document.getElementById('hpbw-val').innerText = (hpbw > 0) ? hpbw.toFixed(2) : "N/A";
+        document.getElementById('sll-val').innerText = (isFinite(sllRelative) && sllRelative < 0) ? sllRelative.toFixed(2) : "N/A";
+        document.getElementById('fnbw-val').innerText = (fnbw > 0) ? fnbw.toFixed(2) : "N/A";
+        document.getElementById('dir-val').innerText = (directivityDB > 0) ? directivityDB.toFixed(2) : "N/A";
     }
 });
