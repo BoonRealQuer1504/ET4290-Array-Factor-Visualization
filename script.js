@@ -3,6 +3,7 @@ let polarChart;
 const plotColors = ['blue', 'red', 'green', 'orange', 'purple', 'teal', 'magenta', 'black'];
 let colorIndex = 0;
 let isEndfireMode = false; // Cờ kiểm tra chế độ Endfire
+let isPhasedMode = false;
 
 document.addEventListener("DOMContentLoaded", function () {
     // 2D 
@@ -54,20 +55,57 @@ document.addEventListener("DOMContentLoaded", function () {
     // Manual
     document.getElementById('btnManual').addEventListener('click', () => {
         isEndfireMode = false;
+        isPhasedMode = false;
         setBetaState(false, null);
     });
 
     // Broadside: Beta = 0
     document.getElementById('btnBroadside').addEventListener('click', () => {
         isEndfireMode = false;
+        isPhasedMode = false;
         setBetaState(true, 0);
     });
 
     // Endfire: Beta = -kd 
     document.getElementById('btnEndfire').addEventListener('click', () => {
         isEndfireMode = true;
+        isPhasedMode = false;
         updateEndfireBeta();
     });
+
+
+    const scanAngleInput = document.getElementById('scan_angle');
+
+    document.getElementById('btnPhased').addEventListener('click', () => {
+        isEndfireMode = false;
+        isPhasedMode = true;
+        updatePhasedBeta(); // Gọi hàm tính toán ngay
+    });
+
+
+    function updatePhasedBeta() {
+        if (!isPhasedMode) return;
+
+        const d = parseFloat(dInput.value);
+        const f = parseFloat(fInput.value);
+        const theta0 = parseFloat(scanAngleInput.value);
+        
+        if (!d || !f || isNaN(theta0)) return;
+
+        const lambda = 3e8 / (f * 1e9);
+        const d_lambda = d / lambda;
+        
+        // Đổi góc quét theta0 sang Radian
+        const theta0_rad = (theta0 * Math.PI) / 180;
+
+        // Công thức: beta (độ) = -360 * (d/lambda) * cos(theta0)
+        const betaVal = -360 * d_lambda * Math.cos(theta0_rad);
+        
+        setBetaState(true, betaVal.toFixed(2));
+    }
+
+    // Sự kiện khi người dùng thay đổi góc quét -> Cập nhật lại Beta
+    scanAngleInput.addEventListener('input', updatePhasedBeta);
 
     // Beta Endfire: beta = -2 * pi * d / lambda (rad) -> degree
     function updateEndfireBeta() {
@@ -85,9 +123,12 @@ document.addEventListener("DOMContentLoaded", function () {
         
         setBetaState(true, betaVal.toFixed(2));
     }
-
-    dInput.addEventListener('input', updateEndfireBeta);
-    fInput.addEventListener('input', updateEndfireBeta);
+    function updateAutoBeta() {
+        if (isEndfireMode) updateEndfireBeta();
+        if (isPhasedMode) updatePhasedBeta();
+    }
+    dInput.addEventListener('input', updateAutoBeta);
+    fInput.addEventListener('input', updateAutoBeta);
 
     document.getElementById('arrayForm').addEventListener('submit', function (e) {
         e.preventDefault();
