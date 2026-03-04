@@ -51,10 +51,10 @@ Truy cập vào link GitHub Pages của dự án (nếu đã kích hoạt).
 Công cụ dựa trên lý thuyết mảng anten cơ bản:
 
 **1. Hệ số mảng tuyến tính (ULA):**
-$$ AF = \sum_{n=0}^{N-1} e^{j n (kd \cos\theta + \beta)} $$
+$$AF = \sum_{n=0}^{N-1} e^{j n (kd \cos\theta + \beta)}$$
 
 **2. Hệ số mảng phẳng (Planar Array):**
-$$ AF_{total}(\theta, \phi) = \left\{ \sum_{m=1}^{M} I_{m1} e^{j(m-1)(kd_x \sin\theta \cos\phi + \beta_x)} \right\} \times \left\{ \sum_{n=1}^{N} I_{1n} e^{j(n-1)(kd_y \sin\theta \sin\phi + \beta_y)} \right\} $$
+$$AF_{total}(\theta, \phi) = \left\{ \sum_{m=1}^{M} I_{m1} e^{j(m-1)(kd_x \sin\theta \cos\phi + \beta_x)} \right\} \times \left\{ \sum_{n=1}^{N} I_{1n} e^{j(n-1)(kd_y \sin\theta \sin\phi + \beta_y)} \right\}$$
 
 ---
 
